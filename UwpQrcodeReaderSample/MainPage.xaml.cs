@@ -88,9 +88,9 @@ namespace UwpQrcodeReaderSample
             CaptureTimer = new DispatcherTimer();
             CaptureTimer.Interval = TimeSpan.FromMilliseconds(300);
             CaptureTimer.Tick += async (sender, ev) =>
-           {
-               await FindQrCodeFromVideoFrame(); // capture a frame and find QR code
-           };
+            {
+                await FindQrCodeFromVideoFrame(); // capture a frame and find QR code
+            };
 
             FocusTimer = new DispatcherTimer();
             FocusTimer.Interval = TimeSpan.FromMilliseconds(2000);
@@ -290,6 +290,7 @@ namespace UwpQrcodeReaderSample
 
             // Start the preview
             await _mediaCapture.StartPreviewAsync();
+
             _isPreviewing = true;
         }
 
@@ -326,16 +327,27 @@ namespace UwpQrcodeReaderSample
             var videoFrame = new VideoFrame(BitmapPixelFormat.Bgra8, (int)previewProperties.Width, (int)previewProperties.Height);
 
             // Capture the preview frame
-            using (var currentFrame = await _mediaCapture.GetPreviewFrameAsync(videoFrame))
+            VideoFrame currentFrame = null;
+
+            try
             {
-                // Collect the resulting frame
-                var FoundString = Decode(currentFrame.SoftwareBitmap);
-                if (FoundString != null)
+                using (currentFrame = await _mediaCapture.GetPreviewFrameAsync(videoFrame))
                 {
-                    ScanResult.Text += Environment.NewLine;
-                    ScanResult.Text += FoundString;
+                    // Collect the resulting frame
+                    var FoundString = Decode(currentFrame.SoftwareBitmap);
+                    if (FoundString != null)
+                    {
+                        ScanResult.Text += Environment.NewLine;
+                        ScanResult.Text += FoundString;
+                    }
                 }
             }
+            catch (Exception e)
+            {
+                Debug.WriteLine("Caught exception during reading current frame. Maybe device is busy or not initialized yet ...");
+                Debug.WriteLine(e.Message);
+            }
+
         }
 
         BarcodeReader barcodeReader = new BarcodeReader();
